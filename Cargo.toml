@@ -11,3 +11,6 @@ prost = "0.6.1"
 tonic = {version="0.3.1",features = ["tls"]}
 tokio = {version="0.3.5",features = ["stream", "macros"]}
 futures = "0.3.8"
+
+[build-dependencies]
+tonic-build = "0.3.1"
