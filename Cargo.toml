@@ -8,12 +8,12 @@ edition = "2018"
 
 [dependencies]
 prost = "0.6.1"
-tonic = {version="0.3.1",features = ["tls"]}
-tokio = {version="0.3.5",features = ["stream", "macros"]}
-futures = "0.3.8"
+tonic = {version="0.2.0",features = ["tls"]}
+tokio = {version="0.2.18",features = ["stream", "macros"]}
+futures = "0.3"
 
 [build-dependencies]
-tonic-build = "0.3.1"
+tonic-build = "0.2.0"
 
 # Binary targets are executables programs that can be run after being compiled.
 # The default binary filename is src/main.rs
