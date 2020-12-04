@@ -12,6 +12,7 @@ pub struct MySay {}
 impl Say for MySay {
     // our rpc impelemented as function
     async fn send(&self,request:Request<SayRequest>)->Result<Response<SayResponse>,Status>{
+        println!("new request from {}",request.get_ref().name);
         // returning a response as SayResponse message as defined in .proto
         Ok(Response::new(SayResponse{
             // reading data from request which is awrapper around our SayRequest message defined in .proto
