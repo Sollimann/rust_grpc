@@ -28,7 +28,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
     ]));
 
     // sending stream
-    let response = client.receive_stream(request).await?.into_inner();
-    println!("RESPONSE=\n{}", response.message);
+    //let response = client.receive_stream(request).await?.into_inner();
+    //println!("RESPONSE=\n{}", response.message);
+
+    let mut response = client.bidirectional(request).await?.into_inner();
+    while let Some(res) = response.message().await? {
+        println!("NOTE = {:?}", res)
+    }
     Ok(())
 }

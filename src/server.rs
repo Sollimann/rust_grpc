@@ -51,6 +51,30 @@ impl Say for MyGreeter {
             message: format!("hello {}", request.get_ref().name),
         }))
     }
+
+    // defining return stream
+    type BidirectionalStream = mpsc::Receiver<Result<SayResponse, Status>>;
+    async fn bidirectional(
+        &self,
+        request: Request<tonic::Streaming<SayRequest>>,
+    ) -> Result<Response<Self::BidirectionalStream>, Status> {
+        // converting request in stream
+        let mut streamer = request.into_inner();
+
+        // creating queue
+        let (mut tx, rx) = mpsc::channel(4);
+        tokio::spawn(async move {
+            // listening on request stream
+            while let Some(req) = streamer.message().await.unwrap(){
+                // sending data as soon as it is available
+                tx.send(Ok(SayResponse {
+                    message: format!("hello {}", req.name),
+                })).await;
+            }
+        });
+        // returning stream as receiver
+        Ok(Response::new(rx))
+    }
 }
 
 #[tokio::main]
