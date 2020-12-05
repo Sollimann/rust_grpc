@@ -1,4 +1,10 @@
+//We would use tokio::sync::mpsc for communicating between futures
+use tokio::sync::mpsc;
+
+// gRPC tools
 use tonic::{transport::Server, Request, Response, Status};
+
+// our messages and services
 use hello::say_server::{Say, SayServer};
 use hello::{SayResponse, SayRequest};
 mod hello;
@@ -10,13 +16,33 @@ pub struct MySay {}
 // implementing rpc for service defined in .proto
 #[tonic::async_trait]
 impl Say for MySay {
+    // specify the output of rpc call
+    type SendStreamStream=mpsc::Receiver<Result<SayResponse,Status>>;
+
     // our rpc impelemented as function
-    async fn send(&self,request:Request<SayRequest>)->Result<Response<SayResponse>,Status>{
+    async fn send_stream(&self,request:Request<SayRequest>)->Result<Response<Self::SendStreamStream>,Status>{
         println!("new request from {}",request.get_ref().name);
+
+        // creating a queue or channel
+        let (mut tx, rx) = mpsc::channel(4);
+
+        // creating a new task
+        tokio::spawn(async move {
+            // looping and sending our response using streams
+            for _ in 0..4{
+                // sending response to our channel
+                tx.send(Ok(SayResponse{
+                    message: format!("hello")
+                })).await;
+            }
+        });
+
         // returning a response as SayResponse message as defined in .proto
-        Ok(Response::new(SayResponse{
-            // reading data from request which is awrapper around our SayRequest message defined in .proto
-            message:format!("hello {}",request.get_ref().name),
+        Ok(Response::new(rx))
+    }
+    async fn send(&self, request: Request<SayRequest>) -> Result<Response<SayResponse>, Status> {
+        Ok(Response::new(SayResponse {
+            message: format!("hello {}", request.get_ref().name)
         }))
     }
 }

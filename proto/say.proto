@@ -8,6 +8,9 @@ package hello;
 service Say {
   // function which can be called
   rpc Send (SayRequest) returns (SayResponse);
+
+  // we specify that we return a stream
+  rpc SendStream(SayRequest) returns (stream SayResponse);
 }
 
 // argument
