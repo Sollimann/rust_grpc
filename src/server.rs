@@ -16,35 +16,25 @@ pub struct MySay {}
 // implementing rpc for service defined in .proto
 #[tonic::async_trait]
 impl Say for MySay {
-    // specify the output of rpc call
-    type SendStreamStream=mpsc::Receiver<Result<SayResponse,Status>>;
 
-    // our rpc impelemented as function
-    async fn send_stream(&self,request:Request<SayRequest>)->Result<Response<Self::SendStreamStream>,Status>{
-        println!("new request from {}",request.get_ref().name);
+    // create a new rpc to receive a stream
+    async fn receive_stream(
+        &self,
+        request: Request<tonic::Streaming<SayRequest>>
+    ) -> Result<Response<SayResponse>, Status>{
+        // converting request into stream
+        let mut stream = request.into_inner();
+        let mut message = String::from("");
 
-        // creating a queue or channel
-        let (mut tx, rx) = mpsc::channel(4);
+        // listening on stream
+        while let Some(req) = stream.message().await? {
+            message.push_str(&format!("Hello {}\n", req.name))
+        }
 
-        // creating a new task
-        tokio::spawn(async move {
-            // looping and sending our response using streams
-            for _ in 0..4{
-                // sending response to our channel
-                tx.send(Ok(SayResponse{
-                    message: format!("hello")
-                })).await;
-            }
-        });
-
-        // returning a response as SayResponse message as defined in .proto
-        Ok(Response::new(rx))
+        // returning response
+        Ok(response::new(SayResponse {message}))
     }
-    async fn send(&self, request: Request<SayRequest>) -> Result<Response<SayResponse>, Status> {
-        Ok(Response::new(SayResponse {
-            message: format!("hello {}", request.get_ref().name)
-        }))
-    }
+
 }
 
 #[tokio::main]
